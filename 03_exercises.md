@@ -317,10 +317,34 @@ Trips %>%
   15. Use the latitude and longitude variables in `Stations` to make a visualization of the total number of departures from each station in the `Trips` data. Use either color or size to show the variation in number of departures. We will improve this plot next week when we learn about maps!
   
 
+```r
+Stations %>% 
+  mutate(sstation = name) %>% 
+  full_join(Trips, 
+            by = "sstation") %>% 
+  group_by(name, lat, long) %>% 
+  count() %>% 
+  ggplot(aes(lat,long,color=n))+
+  geom_point()
+```
+
+![](03_exercises_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
   
   16. Only 14.4% of the trips in our data are carried out by casual users. Create a plot that shows which area(s) have stations with a much higher percentage of departures by casual users. What patterns do you notice? (Again, we'll improve this next week when we learn about maps).
   
 
+```r
+Stations %>% 
+  mutate(sstation = name) %>% 
+  full_join(Trips, 
+            by = "sstation") %>% 
+  group_by(name, lat, long) %>% 
+  count() %>% 
+  ggplot(aes(lat,long,color=n))+
+  geom_point()
+```
+
+![](03_exercises_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
   
 **DID YOU REMEMBER TO GO BACK AND CHANGE THIS SET OF EXERCISES TO THE LARGER DATASET? IF NOT, DO THAT NOW.**
 
