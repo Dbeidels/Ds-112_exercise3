@@ -82,15 +82,18 @@ These exercises will reiterate what you learned in the "Expanding the data wrang
 
 ```{r}
 garden_harvest %>% 
-  group_by(vegetable,wday(date)) %>% 
-  summarize(wt_lbs = sum(weight*0.00220462))
+  mutate(DayWeek = wday(date, label = TRUE)) %>% 
+  group_by(vegetable,DayWeek) %>% 
+  summarize(wt_lbs = sum(weight*0.00220462)) %>% 
+  pivot_wider(names_from = DayWeek,
+              values_from = wt_lbs)
 ```
 
   2. Summarize the `garden_harvest` data to find the total harvest in pound for each vegetable variety and then try adding the plot from the `garden_planting` table. This will not turn out perfectly. What is the problem? How might you fix it?
 
 ```{r}
 garden_harvest %>% 
-  group_by(variety) %>% 
+  group_by(vegetable,variety) %>% 
   summarize(total_weight_lbs = sum(weight*0.00220462)) %>% 
   left_join(garden_planting,by = "variety")
 ```
@@ -110,7 +113,8 @@ garden_harvest %>%
   summarize(total_weight_lbs = sum(weight*0.00220462)) %>% 
   arrange(total_weight_lbs, date) %>% 
   ggplot(aes(total_weight_lbs, fct_reorder(variety,total_weight_lbs)))+
-  geom_col()
+  geom_col()+
+  labs(x="Amount",y ="Variety")
 ```
 
   5. In the `garden_harvest` data, create two new variables: one that makes the varieties lowercase and another that finds the length of the variety name. Arrange the data by vegetable and length of variety name (smallest to largest), with one row for each vegetable variety. HINT: use `str_to_lower()`, `str_length()`, and `distinct()`.
@@ -125,6 +129,7 @@ garden_harvest %>%
 
 ```{r}
 garden_harvest %>% 
+  distinct(variety) %>% 
   filter(str_detect(variety,"er")|str_detect(variety,"ar"))
 ```
 
@@ -151,7 +156,7 @@ Here is the code to read in the data. We do this a little differently than usual
 
 ```{r cache=TRUE}
 data_site <- 
-  "https://www.macalester.edu/~dshuman1/data/112/2014-Q4-Trips-History-Data-Small.rds" 
+  "https://www.macalester.edu/~dshuman1/data/112/2014-Q4-Trips-History-Data.rds" 
 Trips <- readRDS(gzcon(url(data_site)))
 Stations<-read_csv("http://www.macalester.edu/~dshuman1/data/112/DC-Stations.csv")
 ```
@@ -167,7 +172,8 @@ It's natural to expect that bikes are rented more at some times of day, some day
 ```{r}
 Trips %>% 
   ggplot(aes(sdate)) + 
-  geom_density()
+  geom_density()+
+  labs(x="Date",y ="Frequency")
 ```
   
 * We see in this graph the number of times people rented out a bicycle at a date of time and we see that October to middle of November is the most popular time to rent out a bike.  
@@ -178,7 +184,8 @@ Trips %>%
 Trips %>% 
   mutate(time = (hour(sdate)) + (minute(sdate)/60)) %>% 
   ggplot(aes(time))+
-  geom_density()
+  geom_density()+
+  labs(x="Time",y ="Frequency")
 ```
   
 In this graph we see the most popular time of day to rent out a bicycle where we 8-9 am and 4-5pm are the most popular times to rent out a bike.   
@@ -193,7 +200,8 @@ Trips %>%
   scale_y_discrete(
     limits = c("Sunday","Monday","Tuesday", "Wednesday","Thursday","Friday","Saturday"),
     breaks = c("Sunday","Monday","Tuesday", "Wednesday","Thursday","Friday","Saturday"),  
-    labels = c("Sunday","Monday","Tuesday", "Wednesday","Thursday","Friday","Saturday"))
+    labels = c("Sunday","Monday","Tuesday", "Wednesday","Thursday","Friday","Saturday"))+
+  labs(x = "Amount",y="")
 ```
   
 *  We see that the most popular days of the week is Monday and Friday.
@@ -205,7 +213,8 @@ Trips %>%
   mutate(time = (hour(sdate)) + (minute(sdate)/60), day = wday(sdate)) %>% 
   ggplot(aes(time))+
   geom_density()+
-  facet_wrap(~day)
+  facet_wrap(~day)+
+  labs(x="Time",y ="Frequency")
 ```
   
 * The weekdays have two peaks at 8-9am and 4-5pm while the weekends have only one peak.   
@@ -219,7 +228,8 @@ Trips %>%
   mutate(time = (hour(sdate)) + (minute(sdate)/60), day = wday(sdate)) %>% 
   ggplot(aes(time,fill=client, alpha=.5))+
   geom_density()+
-  facet_wrap(~day)
+  facet_wrap(~day)+
+  labs(x="Time",y ="Frequency")
 ```
 
   12. Change the previous graph by adding the argument `position = position_stack()` to `geom_density()`. In your opinion, is this better or worse in terms of telling a story? What are the advantages/disadvantages of each?
@@ -229,7 +239,8 @@ Trips %>%
   mutate(time = (hour(sdate)) + (minute(sdate)/60), day = wday(sdate)) %>% 
   ggplot(aes(time,fill=client, alpha=.5))+
   geom_density( position = position_stack())+
-  facet_wrap(~day)
+  facet_wrap(~day)+
+  labs(x="Time",y ="Frequency")
 ```
   
 * I would say it's worse in terms of telling a story because it does not show the real relationship between clients as the casual clients clearly differ in times of the registered clients  
@@ -241,7 +252,8 @@ Trips %>%
   mutate(time = (hour(sdate)) + (minute(sdate)/60), day = wday(sdate), isWeekend = ifelse(day == 1 | day== 7, "Weekend","Weekday")) %>% 
   ggplot(aes(time,fill=client, alpha=.5))+
   geom_density()+
-  facet_wrap(~isWeekend)
+  facet_wrap(~isWeekend)+
+  labs(x="Time",y ="Frequency")
 ```
   
   14. Change the graph from the previous problem to facet on `client` and fill with `weekday`. What information does this graph tell you that the previous didn't? Is one graph better than the other?
@@ -251,7 +263,8 @@ Trips %>%
   mutate(time = (hour(sdate)) + (minute(sdate)/60), day = wday(sdate), isWeekend = ifelse(day == 1 | day== 7, "Weekend","Weekday")) %>% 
   ggplot(aes(time,fill=isWeekend, alpha=.5))+
   geom_density()+
-  facet_wrap(~client)
+  facet_wrap(~client)+
+  labs(x="Time",y ="Density")
 ```
   
 * I would say the first one is better aesthetically and as well in interpretation.  
@@ -268,7 +281,8 @@ Stations %>%
   group_by(name, lat, long) %>% 
   count() %>% 
   ggplot(aes(lat,long,color=n))+
-  geom_point()
+  geom_point()+
+  labs(x="Latitude",y ="Longitude")
 
   
 ```
@@ -283,7 +297,8 @@ Stations %>%
   group_by(name, lat, long) %>% 
   summarize(clientper=sum(client == "Casual")/n()) %>% 
   ggplot(aes(lat,long,size=clientper, color = clientper))+
-  geom_point()
+  geom_point()+
+  labs(x="Latitude",y ="Longitude")
 ```
   
 * A pattern is the center of the graph is more of a registered client station  
@@ -307,7 +322,8 @@ breed_traits_total <- breed_traits %>%
   
 breed_traits_total %>% 
   ggplot(aes(total_ratings, fct_reorder(Breed,total_ratings)))+
-  geom_point()
+  geom_point()+
+  labs(x="Rating", y="Breed")
 ```
 
   18. The final product of this exercise will be a graph with the top-20 dogs in total ratings (from previous problem) on the y-axis, year on the x-axis, and points colored by each breed's ranking for that year (from the `breed_rank_all` dataset). The points within each breed will be connected by a line, and the breeds should be arranged from the highest median rank to lowest median rank ("highest" is actually the smallest numer, eg. 1 = best). After you're finished, think of AT LEAST one thing you could you do to make this graph better. HINTS: 1. Start with the `breed_rank_all` dataset and pivot it so year is a variable. 2. Use the `separate()` function to get year alone, and there's an extra argument in that function that can make it numeric. 3. For both datasets used, you'll need to `str_squish()` Breed before joining. 
@@ -331,16 +347,22 @@ total20 %>%
   left_join(rank_breeds,
             by = "breed") %>% 
   select(c("breed","total_ratings","years", "ranks")) %>% 
-  group_by(breed) %>%
   ggplot(aes(years,fct_reorder(breed,desc(ranks)), color = ranks, size = total_ratings))+
-  geom_point()
-  
+  geom_point()+
+  labs(x="Year", y = "Breed")
 ```
   
   19. Create your own! Requirements: use a `join` or `pivot` function (or both, if you'd like), a `str_XXX()` function, and a `fct_XXX()` function to create a graph using any of the dog datasets. One suggestion is to try to improve the graph you created for the Tidy Tuesday assignment. If you want an extra challenge, find a way to use the dog images in the `breed_rank_all` file - check out the `ggimage` library and [this resource](https://wilkelab.org/ggtext/) for putting images as labels.
   
-```{r}
-
+```{r, fig.height=5}
+total20 %>%   
+  left_join(rank_breeds,
+            by = "breed") %>% 
+  select(c("breed","total_ratings","years", "ranks")) %>% 
+  ggplot(aes(years,ranks, color = breed))+
+  geom_line()+
+  labs(x = "Year", y = "Rank")
+  
 ```
   
 ## GitHub link
